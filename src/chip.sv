@@ -13,6 +13,7 @@ module my_chip (
 
   assign data_in = io_in;
 
+  logic [11:0] data_in;
   logic [11:0] data_max;
   logic [11:0] data_min;
   typedef enum logic [1:0] {waiting, starting, ending} state_t;
