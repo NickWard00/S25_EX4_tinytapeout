@@ -11,11 +11,13 @@ module my_chip (
   // TODO: remove the counter design and use this module to insert your own design
   // DO NOT change the I/O header of this design
 
-  assign data_in = io_in;
-
-  logic [11:0] data_in;
-  logic [11:0] data_max;
-  logic [11:0] data_min;
+  assign data_in = io_in[11:2];
+  assign go = data_in[0];
+  assign finish = data_in[1];
+  logic go, finish;
+  logic [9:0] data_in;
+  logic [9:0] data_max;
+  logic [9:0] data_min;
   typedef enum logic [1:0] {waiting, starting, ending} state_t;
   state_t curr_state, next_state;
 
@@ -68,10 +70,10 @@ module my_chip (
     end
   end
 
-  assign data_max = (curr_state !== waiting) ? (data_in > data_max) ? data_in : data_max : {12{1'b0}};
-  assign data_min = (curr_state !== waiting) ? (data_in < data_min) ? data_in : data_min : {12{1'b1}};
-  assign range = finish ? data_max - data_min : {12{1'bz}};
+  assign data_max = (curr_state !== waiting) ? (data_in > data_max) ? data_in : data_max : {10{1'b0}};
+  assign data_min = (curr_state !== waiting) ? (data_in < data_min) ? data_in : data_min : {10{1'b1}};
+  assign range = finish ? data_max - data_min : {10{1'bz}};
 
-  assign io_out = range;
+  assign io_out = {2'b0, range};
 
 endmodule
