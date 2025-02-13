@@ -15,7 +15,7 @@ module my_chip (
   assign go = data_in[0];
   assign finish = data_in[1];
   logic go, finish, debug_error;
-  logic [9:0] data_in;
+  logic [9:0] data_in, range;
   logic [9:0] data_max;
   logic [9:0] data_min;
   typedef enum logic [1:0] {waiting, starting, ending} state_t;
