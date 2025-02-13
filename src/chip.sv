@@ -1,48 +1,76 @@
 `default_nettype none
 
 module my_chip (
-    input logic [11:0] io_in, // Inputs to your chip
-    output logic [11:0] io_out, // Outputs from your chip
-    input logic clock,
-    input logic reset // Important: Reset is ACTIVE-HIGH
+  input logic [11:0] io_in, // Inputs to your chip
+  output logic [11:0] io_out, // Outputs from your chip
+  input logic clock,
+  input logic reset // Important: Reset is ACTIVE-HIGH
 );
     
-    // Basic counter design as an example
-    // TODO: remove the counter design and use this module to insert your own design
-    // DO NOT change the I/O header of this design
+  // Basic counter design as an example
+  // TODO: remove the counter design and use this module to insert your own design
+  // DO NOT change the I/O header of this design
 
-    wire [6:0] led_out;
-    assign io_out[6:0] = led_out;
+  assign data_in = io_in;
 
-    // external clock is 1000Hz, so need 10 bit counter
-    reg [9:0] second_counter;
-    reg [3:0] digit;
+  logic [11:0] data_max;
+  logic [11:0] data_min;
+  typedef enum logic [1:0] {waiting, starting, ending} state_t;
+  state_t curr_state, next_state;
 
-    always @(posedge clock) begin
-        // if reset, set counter to 0
-        if (reset) begin
-            second_counter <= 0;
-            digit <= 0;
-        end else begin
-            // if up to 16e6
-            if (second_counter == 1000) begin
-                // reset
-                second_counter <= 0;
-
-                // increment digit
-                digit <= digit + 1'b1;
-
-                // only count from 0 to 9
-                if (digit == 9)
-                    digit <= 0;
-
-            end else
-                // increment counter
-                second_counter <= second_counter + 1'b1;
-        end
+  always_ff @(posedge clock or posedge reset) begin
+    if (reset) begin
+      curr_state <= waiting;
     end
+    else begin
+      curr_state <= next_state;
+    end
+  end
+  
+  always_comb begin
+    case (curr_state)
+      default: next_state = go ? starting : waiting;
+      starting: next_state = finish ? ending : starting;
+      ending: next_state = waiting;
+    endcase
+  end
 
-    // instantiate segment display
-    seg7 seg7(.counter(digit), .segments(led_out));
+  always_comb begin
+    debug_error = 1'b1;
+    if (go & finish) begin
+      debug_error = 1'b1;
+    end
+    else begin
+      case (curr_state)
+        default: begin
+          if (finish) begin
+            debug_error = 1'b1;
+          end
+          else if (go) begin
+            debug_error = 1'b0;
+          end
+        end
+        starting: begin
+          if (finish) begin
+            debug_error = 1'b0;
+          end
+          else if (go) begin
+            debug_error = 1'b0;
+          end
+        end
+        ending: begin
+          if (finish) begin
+            debug_error = 1'b1;
+          end
+        end
+      endcase
+    end
+  end
+
+  assign data_max = (curr_state !== waiting) ? (data_in > data_max) ? data_in : data_max : {12{1'b0}};
+  assign data_min = (curr_state !== waiting) ? (data_in < data_min) ? data_in : data_min : {12{1'b1}};
+  assign range = finish ? data_max - data_min : {12{1'bz}};
+
+  assign io_out = range;
 
 endmodule
