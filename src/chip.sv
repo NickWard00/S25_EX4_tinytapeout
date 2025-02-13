@@ -14,7 +14,7 @@ module my_chip (
   assign data_in = io_in[11:2];
   assign go = data_in[0];
   assign finish = data_in[1];
-  logic go, finish;
+  logic go, finish, debug_error;
   logic [9:0] data_in;
   logic [9:0] data_max;
   logic [9:0] data_min;
@@ -74,6 +74,6 @@ module my_chip (
   assign data_min = (curr_state !== waiting) ? (data_in < data_min) ? data_in : data_min : {10{1'b1}};
   assign range = finish ? data_max - data_min : {10{1'bz}};
 
-  assign io_out = {2'b0, range};
+  assign io_out = {debug_error, 1'b0, range};
 
 endmodule
